@@ -24,7 +24,68 @@ class Playground {
         // Our built-in 'ground' shape. Params: name, options, scene
         var ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 6, height: 6 }, scene);
 
+        // Initialize the 2D GUI with buttons
+        Playground.CreateGUI(scene);
+
         return scene;
+    }
+
+    /**
+     * Creates a 2D GUI with 6 round buttons in a row at the bottom of the screen
+     * @param scene The Babylon.js scene to attach the GUI to
+     * @returns The GUI AdvancedDynamicTexture
+     */
+    public static CreateGUI(scene: BABYLON.Scene): BABYLON.GUI.AdvancedDynamicTexture {
+        // Create a fullscreen GUI
+        const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene);
+
+        // Create a container for the buttons
+        const buttonContainer = new BABYLON.GUI.StackPanel();
+        buttonContainer.isVertical = false; // Horizontal layout
+        buttonContainer.heightInPixels = 120;
+        buttonContainer.adaptWidthToChildren = true; // Auto-size width based on children
+        buttonContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        buttonContainer.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+        buttonContainer.paddingBottomInPixels = 20;
+
+        // Button labels
+        const buttonLabels = ["Linear\nfade in", "Linear\nfade out", "Logarithmic\nfade in", "Logarithmic\nfade out", "Exponential\nfade in", "Exponential\nfade out"];
+
+        // Create 6 round buttons
+        for (let i = 0; i < 6; i++) {
+            const button = BABYLON.GUI.Button.CreateSimpleButton(`button${i}`, buttonLabels[i]);
+
+            // Make the button round
+            button.widthInPixels = 100;
+            button.heightInPixels = button.widthInPixels;
+            button.cornerRadius = 10;
+            button.color = "white";
+            button.background = "#4CAF50";
+            button.fontSize = "10px";
+            button.paddingLeftInPixels = 5;
+            button.paddingRightInPixels = 5;
+
+            // Hover effects
+            button.pointerEnterAnimation = () => {
+                button.background = "#45a049";
+            };
+            button.pointerOutAnimation = () => {
+                button.background = "#4CAF50";
+            };
+
+            // Click event
+            button.onPointerClickObservable.add(() => {
+                console.log(`Button ${i + 1} clicked: ${buttonLabels[i]}`);
+                // You can add specific functionality for each button here
+            });
+
+            buttonContainer.addControl(button);
+        }
+
+        // Add the container to the GUI
+        advancedTexture.addControl(buttonContainer);
+
+        return advancedTexture;
     }
 
     /**
