@@ -140,31 +140,34 @@ class Playground {
             button.heightInPixels = 120;
             button.cornerRadius = 10;
             button.color = "white";
-            button.background = "#4CAF50";
+            button.background = "transparent"; // Make transparent so SVG gradient shows through
             button.fontSize = "10px";
             button.paddingLeftInPixels = 5;
             button.paddingRightInPixels = 5;
 
             // Configure the image (SVG) positioning
             if (button.image) {
-                button.image.widthInPixels = 80;
-                button.image.heightInPixels = 20;
+                button.image.widthInPixels = 120; // Match button width
+                button.image.heightInPixels = 120; // Match button height
                 button.image.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-                button.image.paddingTopInPixels = -40; // Move image up from center
+                button.image.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
             }
 
             // Configure the text positioning
             if (button.textBlock) {
-                button.textBlock.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-                button.textBlock.paddingTopInPixels = 60; // Move text down from center, below the SVG
+                button.textBlock.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+                button.textBlock.paddingBottomInPixels = -60; // Move text to bottom of button
+                button.textBlock.color = "white";
+                button.textBlock.outlineWidth = 1;
+                button.textBlock.outlineColor = "black"; // Add outline for better readability
             }
 
             // Hover effects
             button.pointerEnterAnimation = () => {
-                button.background = "#45a049";
+                button.background = "rgba(69, 160, 73, 0.3)"; // Semi-transparent green overlay on hover
             };
             button.pointerOutAnimation = () => {
-                button.background = "#4CAF50";
+                button.background = "transparent";
             };
 
             // Click event
@@ -187,15 +190,65 @@ class Playground {
      * @returns Array of 6 SVG strings: [linearIn, linearOut, logIn, logOut, expIn, expOut]
      */
     public static CreateVolumeFadeSVGs(): string[] {
-        const width = 200;
-        const height = 100;
-        const padding = 10;
-        const strokeWidth = 2;
+        const width = 120; // Match button width
+        const height = 120; // Match button height
+        const padding = 20;
+        const strokeWidth = 3;
 
-        // Helper function to create SVG with path
-        const createSVG = (pathData: string, title: string): string => {
+        // Helper function to generate gradient stops based on volume curve
+        const generateGradientStops = (fadeType: "linear" | "log" | "exp", direction: "in" | "out"): string => {
+            const stops: string[] = [];
+            const steps = 10; // Use fewer steps for gradients
+
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps; // 0 to 1
+                let volume: number;
+
+                if (fadeType === "linear") {
+                    volume = direction === "in" ? t : 1 - t;
+                } else if (fadeType === "log") {
+                    // Logarithmic fade - make gradient less steep than actual curve
+                    if (direction === "in") {
+                        const x = t + 1 / 50;
+                        const actualVolume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
+                        // Blend with linear for less steep gradient (more linear blend)
+                        volume = 0.3 * actualVolume + 0.7 * t;
+                    } else {
+                        const x = 1 - t + 1 / 50;
+                        const actualVolume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
+                        // Blend with linear for less steep gradient (more linear blend)
+                        volume = 0.3 * actualVolume + 0.7 * (1 - t);
+                    }
+                } else {
+                    // Exponential fade - make gradient less steep than actual curve
+                    if (direction === "in") {
+                        const actualVolume = Math.exp(-11.512925464970227 * (1 - t));
+                        // Blend with linear for less steep gradient (more linear blend)
+                        volume = 0.3 * actualVolume + 0.7 * t;
+                    } else {
+                        const actualVolume = Math.exp(-11.512925464970227 * t);
+                        // Blend with linear for less steep gradient (more linear blend)
+                        volume = 0.3 * actualVolume + 0.7 * (1 - t);
+                    }
+                }
+
+                const percentage = (t * 100).toFixed(1);
+                stops.push(`<stop offset="${percentage}%" style="stop-color:rgba(76,175,80,${volume.toFixed(2)}); stop-opacity:1"/>`);
+            }
+
+            return stops.join("\n      ");
+        };
+
+        // Helper function to create SVG with path and gradient background
+        const createSVG = (pathData: string, title: string, gradientId: string, gradientStops: string): string => {
             return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
   <title>${title}</title>
+  <defs>
+    <linearGradient id="${gradientId}" x1="0%" y1="0%" x2="100%" y2="0%">
+      ${gradientStops}
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#${gradientId})"/>
   <path d="${pathData}" stroke="white" stroke-width="${strokeWidth}" fill="none"/>
 </svg>`;
         };
@@ -204,6 +257,8 @@ class Playground {
         const generateCurvePoints = (fadeType: "linear" | "log" | "exp", direction: "in" | "out"): string => {
             const points: string[] = [];
             const steps = 50;
+
+            const offsetY = -20;
 
             for (let i = 0; i <= steps; i++) {
                 const t = i / steps; // 0 to 1
@@ -234,12 +289,12 @@ class Playground {
                 }
 
                 const x = padding + t * (width - 2 * padding);
-                const y = height - padding - volume * (height - 2 * padding);
+                const y = height - padding - volume * (height - 4 * padding) - padding; // Center the curve vertically
 
                 if (i === 0) {
-                    points.push(`M ${x.toFixed(2)} ${y.toFixed(2)}`);
+                    points.push(`M ${x.toFixed(2)} ${(offsetY + y).toFixed(2)}`);
                 } else {
-                    points.push(`L ${x.toFixed(2)} ${y.toFixed(2)}`);
+                    points.push(`L ${x.toFixed(2)} ${(offsetY + y).toFixed(2)}`);
                 }
             }
 
@@ -247,12 +302,12 @@ class Playground {
         };
 
         // Generate all 6 fade curves
-        const linearIn = createSVG(generateCurvePoints("linear", "in"), "Linear Fade In");
-        const linearOut = createSVG(generateCurvePoints("linear", "out"), "Linear Fade Out");
-        const logIn = createSVG(generateCurvePoints("log", "in"), "Logarithmic Fade In");
-        const logOut = createSVG(generateCurvePoints("log", "out"), "Logarithmic Fade Out");
-        const expIn = createSVG(generateCurvePoints("exp", "in"), "Exponential Fade In");
-        const expOut = createSVG(generateCurvePoints("exp", "out"), "Exponential Fade Out");
+        const linearIn = createSVG(generateCurvePoints("linear", "in"), "Linear Fade In", "linearInGrad", generateGradientStops("linear", "in"));
+        const linearOut = createSVG(generateCurvePoints("linear", "out"), "Linear Fade Out", "linearOutGrad", generateGradientStops("linear", "out"));
+        const logIn = createSVG(generateCurvePoints("log", "in"), "Logarithmic Fade In", "logInGrad", generateGradientStops("log", "in"));
+        const logOut = createSVG(generateCurvePoints("log", "out"), "Logarithmic Fade Out", "logOutGrad", generateGradientStops("log", "out"));
+        const expIn = createSVG(generateCurvePoints("exp", "in"), "Exponential Fade In", "expInGrad", generateGradientStops("exp", "in"));
+        const expOut = createSVG(generateCurvePoints("exp", "out"), "Exponential Fade Out", "expOutGrad", generateGradientStops("exp", "out"));
 
         return [linearIn, linearOut, logIn, logOut, expIn, expOut];
     }
