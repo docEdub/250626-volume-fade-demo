@@ -11,7 +11,7 @@ class Playground {
         const camera = scene.activeCamera as BABYLON.ArcRotateCamera;
         camera.alpha = Math.PI / 2;
         camera.radius = 0.05;
-        camera.target.y = -0.007;
+        camera.target.y = -0.005;
 
         BABYLON.AppendSceneAsync("https://playground.babylonjs.com/scenes/BoomBox.glb", scene);
 
@@ -108,22 +108,20 @@ function CreateGUI(
 
     // Create analyzer visualization
     const analyzerContainer = new BABYLON.GUI.Rectangle();
-    analyzerContainer.widthInPixels = 420;
+    analyzerContainer.widthInPixels = 356;
     analyzerContainer.heightInPixels = 40;
-    analyzerContainer.cornerRadius = 10;
-    analyzerContainer.color = "white";
     analyzerContainer.background = "rgba(0, 0, 0, 0.7)";
-    analyzerContainer.thickness = 2;
+    analyzerContainer.thickness = 0;
     analyzerContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-    analyzerContainer.paddingTopInPixels = -220; // Position above the buttons
-    analyzerContainer.paddingBottomInPixels = 170;
+    analyzerContainer.paddingTopInPixels = -200; // Position above the buttons
+    analyzerContainer.paddingBottomInPixels = 130;
 
     // Create analyzer bars
     const analyzerBars: BABYLON.GUI.Rectangle[] = [];
     const barCount = 32;
-    const barWidth = 8;
+    const barWidth = 7;
     const barSpacing = 4;
-    const maxBarHeight = 80;
+    const maxBarHeight = 100;
 
     for (let i = 0; i < barCount; i++) {
         const bar = new BABYLON.GUI.Rectangle();
@@ -133,20 +131,11 @@ function CreateGUI(
         bar.thickness = 0;
         bar.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
         bar.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-        bar.leftInPixels = 20 + i * (barWidth + barSpacing);
-        bar.paddingBottomInPixels = 10;
+        bar.leftInPixels = 4 + i * (barWidth + barSpacing);
 
         analyzerBars.push(bar);
         analyzerContainer.addControl(bar);
     }
-
-    // Add analyzer title
-    const analyzerTitle = new BABYLON.GUI.TextBlock();
-    analyzerTitle.text = "Audio Spectrum Analyzer";
-    analyzerTitle.color = "white";
-    analyzerTitle.fontSize = "14px";
-    analyzerTitle.paddingTopInPixels = -50;
-    analyzerContainer.addControl(analyzerTitle);
 
     advancedTexture.addControl(analyzerContainer);
 
@@ -191,19 +180,19 @@ function CreateGUI(
     for (let i = 0; i < 6; i++) {
         // Create the button
         const button = BABYLON.GUI.Button.CreateImageWithCenterTextButton(`button${i}`, ButtonLabels[i], "data:image/svg+xml;base64," + btoa(svgCurves[i]));
-        button.widthInPixels = 120;
-        button.heightInPixels = 120;
-        button.cornerRadius = 10;
+        button.widthInPixels = 60;
+        button.heightInPixels = 60;
+        button.cornerRadius = 5;
         button.color = "white";
         button.background = "transparent"; // Make transparent so SVG gradient shows through
-        button.fontSize = "10px";
-        button.paddingLeftInPixels = 5;
-        button.paddingRightInPixels = 5;
+        button.fontSize = "5px";
+        button.paddingLeftInPixels = 2;
+        button.paddingRightInPixels = 2;
 
         // Configure the image (SVG) positioning
         if (button.image) {
-            button.image.widthInPixels = 120; // Match button width
-            button.image.heightInPixels = 120; // Match button height
+            button.image.widthInPixels = 50; // Match button width
+            button.image.heightInPixels = 60; // Match button height
             button.image.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
             button.image.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
         }
@@ -211,11 +200,11 @@ function CreateGUI(
         // Configure the text positioning
         if (button.textBlock) {
             button.textBlock.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-            button.textBlock.paddingBottomInPixels = -60; // Move text to bottom of button
+            button.textBlock.paddingBottomInPixels = -30; // Move text to bottom of button
             button.textBlock.color = "white";
             button.textBlock.outlineWidth = 1;
             button.textBlock.outlineColor = "black"; // Add outline for better readability
-            button.textBlock.fontSize = "14px";
+            button.textBlock.fontSize = "10px";
         }
 
         // Hover effects
@@ -246,10 +235,10 @@ function CreateGUI(
  * @returns Array of 6 SVG strings: [linearIn, linearOut, logIn, logOut, expIn, expOut]
  */
 function CreateVolumeFadeSVGs(): string[] {
-    const width = 120; // Match button width
-    const height = 120; // Match button height
-    const padding = 20;
-    const strokeWidth = 3;
+    const width = 56; // Match button width
+    const height = 56; // Match button height
+    const padding = 0;
+    const strokeWidth = 1;
 
     // Helper function to generate gradient stops based on volume curve
     const generateGradientStops = (fadeType: "linear" | "log" | "exp", direction: "in" | "out"): string => {
@@ -314,7 +303,7 @@ function CreateVolumeFadeSVGs(): string[] {
         const points: string[] = [];
         const steps = 50;
 
-        const offsetY = -20;
+        const offsetY = 7;
 
         for (let i = 0; i <= steps; i++) {
             let step = i / steps; // 0 to 1
@@ -334,7 +323,7 @@ function CreateVolumeFadeSVGs(): string[] {
             }
 
             const x = padding + step * (width - 2 * padding);
-            const y = height - padding - volume * (height - 4 * padding) - padding; // Center the curve vertically
+            const y = 0.3 * (height - padding - volume * (height - 4 * padding) - padding); // Center the curve vertically
 
             points.push(`${i === 0 ? "M" : "L"} ${x.toFixed(2)} ${(offsetY + y).toFixed(2)}`);
         }
