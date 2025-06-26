@@ -16,6 +16,7 @@ class Playground {
         BABYLON.AppendSceneAsync("https://playground.babylonjs.com/scenes/BoomBox.glb", scene);
 
         // Load music and play it when the audio engine is unlocked.
+        let musicSound: BABYLON.StreamingSound | null = null;
         (async () => {
             const audioEngine = await BABYLON.CreateAudioEngineAsync();
             const music = await BABYLON.CreateStreamingSoundAsync("music", "https://amf-ms.github.io/AudioAssets/samples/mobygratis/bird.mp3", { loop: true });
@@ -24,10 +25,11 @@ class Playground {
             await audioEngine.unlockAsync();
 
             music.play();
+            musicSound = music;
         })();
 
         // Add GUI.
-        Playground.CreateGUI(scene);
+        Playground.CreateGUI(scene, () => musicSound);
 
         return scene;
     }
@@ -35,11 +37,83 @@ class Playground {
     /**
      * Creates a 2D GUI with 6 round buttons in a row at the bottom of the screen
      * @param scene The Babylon.js scene to attach the GUI to
+     * @param getMusicSound Function to get the current music sound for analyzer access
      * @returns The GUI AdvancedDynamicTexture
      */
-    public static CreateGUI(scene: BABYLON.Scene): BABYLON.GUI.AdvancedDynamicTexture {
+    public static CreateGUI(scene: BABYLON.Scene, getMusicSound?: () => BABYLON.StreamingSound | null): BABYLON.GUI.AdvancedDynamicTexture {
         // Create a fullscreen GUI
         const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene);
+
+        // Create analyzer visualization
+        const analyzerContainer = new BABYLON.GUI.Rectangle();
+        analyzerContainer.widthInPixels = 420;
+        analyzerContainer.heightInPixels = 40;
+        analyzerContainer.cornerRadius = 10;
+        analyzerContainer.color = "white";
+        analyzerContainer.background = "rgba(0, 0, 0, 0.7)";
+        analyzerContainer.thickness = 2;
+        analyzerContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        analyzerContainer.paddingTopInPixels = -220; // Position above the buttons
+        analyzerContainer.paddingBottomInPixels = 170;
+
+        // Create analyzer bars
+        const analyzerBars: BABYLON.GUI.Rectangle[] = [];
+        const barCount = 32;
+        const barWidth = 8;
+        const barSpacing = 4;
+        const maxBarHeight = 80;
+
+        for (let i = 0; i < barCount; i++) {
+            const bar = new BABYLON.GUI.Rectangle();
+            bar.widthInPixels = barWidth;
+            bar.heightInPixels = 2;
+            bar.background = `hsl(${180 + i * 5}, 70%, 60%)`;
+            bar.thickness = 0;
+            bar.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            bar.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            bar.leftInPixels = 20 + i * (barWidth + barSpacing);
+            bar.paddingBottomInPixels = 10;
+
+            analyzerBars.push(bar);
+            analyzerContainer.addControl(bar);
+        }
+
+        // Add analyzer title
+        const analyzerTitle = new BABYLON.GUI.TextBlock();
+        analyzerTitle.text = "Audio Spectrum Analyzer";
+        analyzerTitle.color = "white";
+        analyzerTitle.fontSize = "14px";
+        analyzerTitle.paddingTopInPixels = -50;
+        analyzerContainer.addControl(analyzerTitle);
+
+        advancedTexture.addControl(analyzerContainer);
+
+        // Update analyzer bars based on audio data
+        if (getMusicSound) {
+            scene.onBeforeRenderObservable.add(() => {
+                const musicSound = getMusicSound();
+                if (musicSound && musicSound.analyzer) {
+                    const analyzer = musicSound.analyzer;
+                    const dataArray = analyzer.getByteFrequencyData();
+
+                    // Update bars with frequency data
+                    for (let i = 0; i < analyzerBars.length; i++) {
+                        const bar = analyzerBars[i];
+                        // Map bar index to frequency data (focusing on lower frequencies for better visualization)
+                        const dataIndex = Math.floor((i / analyzerBars.length) * dataArray.length * 0.3);
+                        const value = dataArray[dataIndex] / 255; // Normalize to 0-1
+                        const barHeight = Math.max(2, value * maxBarHeight);
+                        bar.heightInPixels = barHeight;
+
+                        // Color based on intensity
+                        const hue = 180 + i * 5 + value * 60;
+                        const saturation = 70 + value * 30;
+                        const lightness = 40 + value * 40;
+                        bar.background = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                    }
+                }
+            });
+        }
 
         // Create a container for the buttons
         const buttonContainer = new BABYLON.GUI.StackPanel();
