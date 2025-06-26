@@ -40,21 +40,27 @@ class Playground {
 
                 switch (buttonIndex) {
                     case 0: // Logarithmic fade in
+                        music.volume = 0;
                         music.setVolume(1, { duration: 2, shape: BABYLON.AudioParameterRampShape.Logarithmic });
                         break;
                     case 1: // Logarithmic fade out
+                        music.volume = 1;
                         music.setVolume(0, { duration: 2, shape: BABYLON.AudioParameterRampShape.Logarithmic });
                         break;
                     case 2: // Linear fade in
+                        music.volume = 0;
                         music.setVolume(1, { duration: 2, shape: BABYLON.AudioParameterRampShape.Linear });
                         break;
                     case 3: // Linear fade out
+                        music.volume = 1;
                         music.setVolume(0, { duration: 2, shape: BABYLON.AudioParameterRampShape.Linear });
                         break;
                     case 4: // Exponential fade in
+                        music.volume = 0;
                         music.setVolume(1, { duration: 2, shape: BABYLON.AudioParameterRampShape.Exponential });
                         break;
                     case 5: // Exponential fade out
+                        music.volume = 1;
                         music.setVolume(0, { duration: 2, shape: BABYLON.AudioParameterRampShape.Exponential });
                         break;
                 }
