@@ -1,30 +1,32 @@
 class Playground {
     public static CreateScene(engine: BABYLON.Engine, canvas: HTMLCanvasElement): BABYLON.Scene {
-        // This creates a basic Babylon Scene object (non-mesh)
-        var scene = new BABYLON.Scene(engine);
+        // Create a basic scene.
+        const scene = new BABYLON.Scene(engine);
+        scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
+        scene.createDefaultEnvironment({
+            createGround: false,
+            createSkybox: false,
+        });
+        scene.createDefaultCameraOrLight(true, true, false);
+        const camera = scene.activeCamera as BABYLON.ArcRotateCamera;
+        camera.alpha = Math.PI / 2;
+        camera.radius = 0.05;
+        camera.target.y = -0.007;
 
-        // This creates and positions an arc-rotate camera (non-mesh)
-        var camera = new BABYLON.ArcRotateCamera("camera", Math.PI / 2, Math.PI / 2.5, 10, BABYLON.Vector3.Zero(), scene);
+        BABYLON.AppendSceneAsync("https://playground.babylonjs.com/scenes/BoomBox.glb", scene);
 
-        // This attaches the camera to the canvas
-        camera.attachControl(canvas, true);
+        // Load music and play it when the audio engine is unlocked.
+        (async () => {
+            const audioEngine = await BABYLON.CreateAudioEngineAsync();
+            const music = await BABYLON.CreateStreamingSoundAsync("music", "https://amf-ms.github.io/AudioAssets/samples/mobygratis/bird.mp3", { loop: true });
 
-        // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
-        var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+            // Wait for the audio engine to unlock
+            await audioEngine.unlockAsync();
 
-        // Default intensity is 1. Let's dim the light a small amount
-        light.intensity = 0.7;
+            music.play();
+        })();
 
-        // Our built-in 'sphere' shape. Params: name, options, scene
-        var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 2, segments: 32 }, scene);
-
-        // Move the sphere upward 1/2 its height
-        sphere.position.y = 1;
-
-        // Our built-in 'ground' shape. Params: name, options, scene
-        var ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 6, height: 6 }, scene);
-
-        // Initialize the 2D GUI with buttons
+        // Add GUI.
         Playground.CreateGUI(scene);
 
         return scene;
