@@ -27,15 +27,21 @@ class Playground {
 
             const rampDuration = 2;
             let rampFinished = true;
+            let guiButtons: BABYLON.GUI.Button[] = [];
 
             const waitForRampToFinish = () => {
                 setTimeout(() => {
                     rampFinished = true;
+                    // Re-enable all buttons
+                    guiButtons.forEach((button) => {
+                        button.isEnabled = true;
+                        button.alpha = 1;
+                    });
                 }, (rampDuration + 0.5) * 1000);
             };
 
             // Init GUI.
-            CreateGUI(scene, music, (buttonIndex: number) => {
+            const { gui, buttons } = CreateGUI(scene, music, (buttonIndex: number) => {
                 if (!rampFinished) {
                     console.warn("Previous ramp is still in progress, ignoring click.");
                     return;
@@ -65,8 +71,16 @@ class Playground {
                 }
 
                 rampFinished = false;
+                // Disable all buttons during ramp
+                buttons.forEach((button) => {
+                    button.isEnabled = false;
+                    button.alpha = 0.5;
+                });
                 waitForRampToFinish();
             });
+
+            // Store the buttons array for enabling/disabling
+            guiButtons = buttons;
         })();
 
         return scene;
@@ -79,9 +93,13 @@ const ButtonLabels = ["Logarithmic\nfade in", "Logarithmic\nfade out", "Linear\n
  * Creates a 2D GUI with 6 round buttons in a row at the bottom of the screen
  * @param scene The Babylon.js scene to attach the GUI to
  * @param getMusicSound Function to get the current music sound for analyzer access
- * @returns The GUI AdvancedDynamicTexture
+ * @returns Object containing the GUI AdvancedDynamicTexture and the buttons array
  */
-function CreateGUI(scene: BABYLON.Scene, music: BABYLON.StreamingSound, onButtonClicked: (buttonIndex: number) => void): BABYLON.GUI.AdvancedDynamicTexture {
+function CreateGUI(
+    scene: BABYLON.Scene,
+    music: BABYLON.StreamingSound,
+    onButtonClicked: (buttonIndex: number) => void
+): { gui: BABYLON.GUI.AdvancedDynamicTexture; buttons: BABYLON.GUI.Button[] } {
     // Create a fullscreen GUI
     const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene);
 
@@ -163,6 +181,9 @@ function CreateGUI(scene: BABYLON.Scene, music: BABYLON.StreamingSound, onButton
     // Get the SVG fade curves
     const svgCurves = CreateVolumeFadeSVGs();
 
+    // Array to store all buttons
+    const buttons: BABYLON.GUI.Button[] = [];
+
     // Create 6 round buttons with SVGs
     for (let i = 0; i < 6; i++) {
         // Create the button
@@ -209,13 +230,14 @@ function CreateGUI(scene: BABYLON.Scene, music: BABYLON.StreamingSound, onButton
             onButtonClicked(i);
         });
 
+        buttons.push(button);
         buttonContainer.addControl(button);
     }
 
     // Add the container to the GUI
     advancedTexture.addControl(buttonContainer);
 
-    return advancedTexture;
+    return { gui: advancedTexture, buttons };
 }
 
 /**
