@@ -125,7 +125,7 @@ class Playground {
         buttonContainer.paddingBottomInPixels = 20;
 
         // Button labels
-        const buttonLabels = ["Linear\nfade in", "Linear\nfade out", "Logarithmic\nfade in", "Logarithmic\nfade out", "Exponential\nfade in", "Exponential\nfade out"];
+        const buttonLabels = ["Logarithmic\nfade in", "Logarithmic\nfade out", "Linear\nfade in", "Linear\nfade out", "Exponential\nfade in", "Exponential\nfade out"];
 
         // Get the SVG fade curves
         const svgCurves = Playground.CreateVolumeFadeSVGs();
@@ -160,11 +160,12 @@ class Playground {
                 button.textBlock.color = "white";
                 button.textBlock.outlineWidth = 1;
                 button.textBlock.outlineColor = "black"; // Add outline for better readability
+                button.textBlock.fontSize = "14px";
             }
 
             // Hover effects
             button.pointerEnterAnimation = () => {
-                button.background = "rgba(69, 160, 73, 0.3)"; // Semi-transparent green overlay on hover
+                button.background = "rgba(160, 69, 73, 0.3)"; // Semi-transparent green overlay on hover
             };
             button.pointerOutAnimation = () => {
                 button.background = "transparent";
@@ -212,28 +213,28 @@ class Playground {
                         const x = t + 1 / 50;
                         const actualVolume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
                         // Blend with linear for less steep gradient (more linear blend)
-                        volume = 0.3 * actualVolume + 0.7 * t;
+                        volume = 0.5 * actualVolume + 0.5 * t;
                     } else {
                         const x = 1 - t + 1 / 50;
                         const actualVolume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
                         // Blend with linear for less steep gradient (more linear blend)
-                        volume = 0.3 * actualVolume + 0.7 * (1 - t);
+                        volume = 0.5 * actualVolume + 0.5 * (1 - t);
                     }
                 } else {
                     // Exponential fade - make gradient less steep than actual curve
                     if (direction === "in") {
                         const actualVolume = Math.exp(-11.512925464970227 * (1 - t));
                         // Blend with linear for less steep gradient (more linear blend)
-                        volume = 0.3 * actualVolume + 0.7 * t;
+                        volume = 0.5 * actualVolume + 0.5 * t;
                     } else {
                         const actualVolume = Math.exp(-11.512925464970227 * t);
                         // Blend with linear for less steep gradient (more linear blend)
-                        volume = 0.3 * actualVolume + 0.7 * (1 - t);
+                        volume = 0.5 * actualVolume + 0.5 * (1 - t);
                     }
                 }
 
                 const percentage = (t * 100).toFixed(1);
-                stops.push(`<stop offset="${percentage}%" style="stop-color:rgba(76,175,80,${volume.toFixed(2)}); stop-opacity:1"/>`);
+                stops.push(`<stop offset="${percentage}%" style="stop-color:rgba(76,80,175,${volume.toFixed(2)}); stop-opacity:1"/>`);
             }
 
             return stops.join("\n      ");
@@ -302,14 +303,14 @@ class Playground {
         };
 
         // Generate all 6 fade curves
-        const linearIn = createSVG(generateCurvePoints("linear", "in"), "Linear Fade In", "linearInGrad", generateGradientStops("linear", "in"));
-        const linearOut = createSVG(generateCurvePoints("linear", "out"), "Linear Fade Out", "linearOutGrad", generateGradientStops("linear", "out"));
         const logIn = createSVG(generateCurvePoints("log", "in"), "Logarithmic Fade In", "logInGrad", generateGradientStops("log", "in"));
         const logOut = createSVG(generateCurvePoints("log", "out"), "Logarithmic Fade Out", "logOutGrad", generateGradientStops("log", "out"));
+        const linearIn = createSVG(generateCurvePoints("linear", "in"), "Linear Fade In", "linearInGrad", generateGradientStops("linear", "in"));
+        const linearOut = createSVG(generateCurvePoints("linear", "out"), "Linear Fade Out", "linearOutGrad", generateGradientStops("linear", "out"));
         const expIn = createSVG(generateCurvePoints("exp", "in"), "Exponential Fade In", "expInGrad", generateGradientStops("exp", "in"));
         const expOut = createSVG(generateCurvePoints("exp", "out"), "Exponential Fade Out", "expOutGrad", generateGradientStops("exp", "out"));
 
-        return [linearIn, linearOut, logIn, logOut, expIn, expOut];
+        return [logIn, logOut, linearIn, linearOut, expIn, expOut];
     }
 }
 
