@@ -311,41 +311,26 @@ function CreateVolumeFadeSVGs(): string[] {
         const offsetY = -20;
 
         for (let i = 0; i <= steps; i++) {
-            const t = i / steps; // 0 to 1
+            let step = i / steps; // 0 to 1
+            const t = direction === "in" ? step : 1 - step; // Reverse t for fade out
+
             let volume: number;
 
             if (fadeType === "linear") {
-                volume = direction === "in" ? t : 1 - t;
+                volume = t;
             } else if (fadeType === "log") {
                 // Logarithmic fade matching GetLogCurve function
-                if (direction === "in") {
-                    // For fade in: use the log curve as-is
-                    const x = t + 1 / 50; // Add small increment to avoid log(0)
-                    volume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
-                } else {
-                    // For fade out: invert the log curve
-                    const x = 1 - t + 1 / 50;
-                    volume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
-                }
+                const x = t + 1 / 50; // Add small increment to avoid log(0)
+                volume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
             } else {
                 // Exponential fade matching GetExpCurve function
-                if (direction === "in") {
-                    // For fade in: use the exp curve as-is
-                    volume = Math.exp(-11.512925464970227 * (1 - t));
-                } else {
-                    // For fade out: invert the exp curve
-                    volume = Math.exp(-11.512925464970227 * t);
-                }
+                volume = Math.exp(-11.512925464970227 * (1 - t));
             }
 
-            const x = padding + t * (width - 2 * padding);
+            const x = padding + step * (width - 2 * padding);
             const y = height - padding - volume * (height - 4 * padding) - padding; // Center the curve vertically
 
-            if (i === 0) {
-                points.push(`M ${x.toFixed(2)} ${(offsetY + y).toFixed(2)}`);
-            } else {
-                points.push(`L ${x.toFixed(2)} ${(offsetY + y).toFixed(2)}`);
-            }
+            points.push(`${i === 0 ? "M" : "L"} ${x.toFixed(2)} ${(offsetY + y).toFixed(2)}`);
         }
 
         return points.join(" ");
