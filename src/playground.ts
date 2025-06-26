@@ -21,17 +21,51 @@ class Playground {
             const audioEngine = await BABYLON.CreateAudioEngineAsync();
             const music = await BABYLON.CreateStreamingSoundAsync("music", "https://amf-ms.github.io/AudioAssets/samples/mobygratis/bird.mp3", {
                 analyzerEnabled: true,
+                autoplay: true,
                 loop: true,
             });
 
-            // Wait for the audio engine to unlock
-            await audioEngine.unlockAsync();
+            const rampDuration = 2;
+            let rampFinished = true;
 
-            music.play();
+            const waitForRampToFinish = () => {
+                setTimeout(() => {
+                    rampFinished = true;
+                }, (rampDuration + 0.5) * 1000);
+            };
 
             // Init GUI.
             CreateGUI(scene, music, (buttonIndex: number) => {
+                if (!rampFinished) {
+                    console.warn("Previous ramp is still in progress, ignoring click.");
+                    return;
+                }
+
                 console.log(`Button ${buttonIndex + 1} clicked: ${ButtonLabels[buttonIndex]}`);
+
+                switch (buttonIndex) {
+                    case 0: // Logarithmic fade in
+                        music.setVolume(1, { duration: 2, shape: BABYLON.AudioParameterRampShape.Logarithmic });
+                        break;
+                    case 1: // Logarithmic fade out
+                        music.setVolume(0, { duration: 2, shape: BABYLON.AudioParameterRampShape.Logarithmic });
+                        break;
+                    case 2: // Linear fade in
+                        music.setVolume(1, { duration: 2, shape: BABYLON.AudioParameterRampShape.Linear });
+                        break;
+                    case 3: // Linear fade out
+                        music.setVolume(0, { duration: 2, shape: BABYLON.AudioParameterRampShape.Linear });
+                        break;
+                    case 4: // Exponential fade in
+                        music.setVolume(1, { duration: 2, shape: BABYLON.AudioParameterRampShape.Exponential });
+                        break;
+                    case 5: // Exponential fade out
+                        music.setVolume(0, { duration: 2, shape: BABYLON.AudioParameterRampShape.Exponential });
+                        break;
+                }
+
+                rampFinished = false;
+                waitForRampToFinish();
             });
         })();
 
