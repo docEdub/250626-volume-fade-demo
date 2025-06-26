@@ -42,7 +42,7 @@ class Playground {
         // Create a container for the buttons
         const buttonContainer = new BABYLON.GUI.StackPanel();
         buttonContainer.isVertical = false; // Horizontal layout
-        buttonContainer.heightInPixels = 120;
+        buttonContainer.heightInPixels = 140; // Reduced height since SVGs are now inside buttons
         buttonContainer.adaptWidthToChildren = true; // Auto-size width based on children
         buttonContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
         buttonContainer.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
@@ -51,19 +51,37 @@ class Playground {
         // Button labels
         const buttonLabels = ["Linear\nfade in", "Linear\nfade out", "Logarithmic\nfade in", "Logarithmic\nfade out", "Exponential\nfade in", "Exponential\nfade out"];
 
-        // Create 6 round buttons
+        // Get the SVG fade curves
+        const svgCurves = Playground.CreateVolumeFadeSVGs();
+
+        // Create 6 round buttons with SVGs
         for (let i = 0; i < 6; i++) {
-            const button = BABYLON.GUI.Button.CreateSimpleButton(`button${i}`, buttonLabels[i]);
+            // Create the button
+            const button = BABYLON.GUI.Button.CreateImageWithCenterTextButton(`button${i}`, buttonLabels[i], "data:image/svg+xml;base64," + btoa(svgCurves[i]));
 
             // Make the button round
-            button.widthInPixels = 100;
-            button.heightInPixels = button.widthInPixels;
+            button.widthInPixels = 120;
+            button.heightInPixels = 120;
             button.cornerRadius = 10;
             button.color = "white";
             button.background = "#4CAF50";
             button.fontSize = "10px";
             button.paddingLeftInPixels = 5;
             button.paddingRightInPixels = 5;
+
+            // Configure the image (SVG) positioning
+            if (button.image) {
+                button.image.widthInPixels = 80;
+                button.image.heightInPixels = 20;
+                button.image.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+                button.image.paddingTopInPixels = -40; // Move image up from center
+            }
+
+            // Configure the text positioning
+            if (button.textBlock) {
+                button.textBlock.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+                button.textBlock.paddingTopInPixels = 60; // Move text down from center, below the SVG
+            }
 
             // Hover effects
             button.pointerEnterAnimation = () => {
@@ -102,7 +120,7 @@ class Playground {
         const createSVG = (pathData: string, title: string): string => {
             return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
   <title>${title}</title>
-  <path d="${pathData}" stroke="black" stroke-width="${strokeWidth}" fill="none"/>
+  <path d="${pathData}" stroke="white" stroke-width="${strokeWidth}" fill="none"/>
 </svg>`;
         };
 
@@ -118,19 +136,24 @@ class Playground {
                 if (fadeType === "linear") {
                     volume = direction === "in" ? t : 1 - t;
                 } else if (fadeType === "log") {
-                    // Logarithmic fade (more gradual at start/end)
+                    // Logarithmic fade matching GetLogCurve function
                     if (direction === "in") {
-                        volume = Math.log10(1 + t * 9) / Math.log10(10);
+                        // For fade in: use the log curve as-is
+                        const x = t + 1 / 50; // Add small increment to avoid log(0)
+                        volume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
                     } else {
-                        volume = Math.log10(1 + (1 - t) * 9) / Math.log10(10);
+                        // For fade out: invert the log curve
+                        const x = 1 - t + 1 / 50;
+                        volume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
                     }
                 } else {
-                    // exponential
-                    // Exponential fade (steep at start/end)
+                    // Exponential fade matching GetExpCurve function
                     if (direction === "in") {
-                        volume = Math.pow(t, 2);
+                        // For fade in: use the exp curve as-is
+                        volume = Math.exp(-11.512925464970227 * (1 - t));
                     } else {
-                        volume = Math.pow(1 - t, 2);
+                        // For fade out: invert the exp curve
+                        volume = Math.exp(-11.512925464970227 * t);
                     }
                 }
 
