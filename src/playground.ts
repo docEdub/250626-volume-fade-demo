@@ -183,7 +183,7 @@ function CreateGUI(
         button.widthInPixels = 60;
         button.heightInPixels = 60;
         button.cornerRadius = 5;
-        button.color = "white";
+        button.color = "rgb(127, 127, 127)"; // Semi-transparent white for better visibility
         button.background = "transparent"; // Make transparent so SVG gradient shows through
         button.fontSize = "5px";
         button.paddingLeftInPixels = 2;
@@ -191,7 +191,7 @@ function CreateGUI(
 
         // Configure the image (SVG) positioning
         if (button.image) {
-            button.image.widthInPixels = 50; // Match button width
+            button.image.widthInPixels = 60; // Match button width
             button.image.heightInPixels = 60; // Match button height
             button.image.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
             button.image.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
@@ -202,9 +202,7 @@ function CreateGUI(
             button.textBlock.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
             button.textBlock.paddingBottomInPixels = -30; // Move text to bottom of button
             button.textBlock.color = "white";
-            button.textBlock.outlineWidth = 1;
-            button.textBlock.outlineColor = "black"; // Add outline for better readability
-            button.textBlock.fontSize = "10px";
+            button.textBlock.fontSize = "9px";
         }
 
         // Hover effects
@@ -235,10 +233,10 @@ function CreateGUI(
  * @returns Array of 6 SVG strings: [linearIn, linearOut, logIn, logOut, expIn, expOut]
  */
 function CreateVolumeFadeSVGs(): string[] {
-    const width = 56; // Match button width
-    const height = 56; // Match button height
+    const width = 60; // Match button width
+    const height = 60; // Match button height
     const padding = 0;
-    const strokeWidth = 1;
+    const strokeWidth = 2;
 
     // Helper function to generate gradient stops based on volume curve
     const generateGradientStops = (fadeType: "linear" | "log" | "exp", direction: "in" | "out"): string => {
