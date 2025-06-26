@@ -19,230 +19,228 @@ class Playground {
         let musicSound: BABYLON.StreamingSound | null = null;
         (async () => {
             const audioEngine = await BABYLON.CreateAudioEngineAsync();
-            const music = await BABYLON.CreateStreamingSoundAsync("music", "https://amf-ms.github.io/AudioAssets/samples/mobygratis/bird.mp3", { loop: true });
+            const music = await BABYLON.CreateStreamingSoundAsync("music", "https://amf-ms.github.io/AudioAssets/samples/mobygratis/bird.mp3", {
+                analyzerEnabled: true,
+                loop: true,
+            });
 
             // Wait for the audio engine to unlock
             await audioEngine.unlockAsync();
 
             music.play();
-            musicSound = music;
-        })();
 
-        // Add GUI.
-        Playground.CreateGUI(scene, () => musicSound);
+            // Init GUI.
+            CreateGUI(scene, music, (buttonIndex: number) => {
+                console.log(`Button ${buttonIndex + 1} clicked: ${ButtonLabels[buttonIndex]}`);
+            });
+        })();
 
         return scene;
     }
+}
 
-    /**
-     * Creates a 2D GUI with 6 round buttons in a row at the bottom of the screen
-     * @param scene The Babylon.js scene to attach the GUI to
-     * @param getMusicSound Function to get the current music sound for analyzer access
-     * @returns The GUI AdvancedDynamicTexture
-     */
-    public static CreateGUI(scene: BABYLON.Scene, getMusicSound?: () => BABYLON.StreamingSound | null): BABYLON.GUI.AdvancedDynamicTexture {
-        // Create a fullscreen GUI
-        const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene);
+const ButtonLabels = ["Logarithmic\nfade in", "Logarithmic\nfade out", "Linear\nfade in", "Linear\nfade out", "Exponential\nfade in", "Exponential\nfade out"];
 
-        // Create analyzer visualization
-        const analyzerContainer = new BABYLON.GUI.Rectangle();
-        analyzerContainer.widthInPixels = 420;
-        analyzerContainer.heightInPixels = 40;
-        analyzerContainer.cornerRadius = 10;
-        analyzerContainer.color = "white";
-        analyzerContainer.background = "rgba(0, 0, 0, 0.7)";
-        analyzerContainer.thickness = 2;
-        analyzerContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-        analyzerContainer.paddingTopInPixels = -220; // Position above the buttons
-        analyzerContainer.paddingBottomInPixels = 170;
+/**
+ * Creates a 2D GUI with 6 round buttons in a row at the bottom of the screen
+ * @param scene The Babylon.js scene to attach the GUI to
+ * @param getMusicSound Function to get the current music sound for analyzer access
+ * @returns The GUI AdvancedDynamicTexture
+ */
+function CreateGUI(scene: BABYLON.Scene, music: BABYLON.StreamingSound, onButtonClicked: (buttonIndex: number) => void): BABYLON.GUI.AdvancedDynamicTexture {
+    // Create a fullscreen GUI
+    const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene);
 
-        // Create analyzer bars
-        const analyzerBars: BABYLON.GUI.Rectangle[] = [];
-        const barCount = 32;
-        const barWidth = 8;
-        const barSpacing = 4;
-        const maxBarHeight = 80;
+    // Create analyzer visualization
+    const analyzerContainer = new BABYLON.GUI.Rectangle();
+    analyzerContainer.widthInPixels = 420;
+    analyzerContainer.heightInPixels = 40;
+    analyzerContainer.cornerRadius = 10;
+    analyzerContainer.color = "white";
+    analyzerContainer.background = "rgba(0, 0, 0, 0.7)";
+    analyzerContainer.thickness = 2;
+    analyzerContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+    analyzerContainer.paddingTopInPixels = -220; // Position above the buttons
+    analyzerContainer.paddingBottomInPixels = 170;
 
-        for (let i = 0; i < barCount; i++) {
-            const bar = new BABYLON.GUI.Rectangle();
-            bar.widthInPixels = barWidth;
-            bar.heightInPixels = 2;
-            bar.background = `hsl(${180 + i * 5}, 70%, 60%)`;
-            bar.thickness = 0;
-            bar.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-            bar.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-            bar.leftInPixels = 20 + i * (barWidth + barSpacing);
-            bar.paddingBottomInPixels = 10;
+    // Create analyzer bars
+    const analyzerBars: BABYLON.GUI.Rectangle[] = [];
+    const barCount = 32;
+    const barWidth = 8;
+    const barSpacing = 4;
+    const maxBarHeight = 80;
 
-            analyzerBars.push(bar);
-            analyzerContainer.addControl(bar);
-        }
+    for (let i = 0; i < barCount; i++) {
+        const bar = new BABYLON.GUI.Rectangle();
+        bar.widthInPixels = barWidth;
+        bar.heightInPixels = 2;
+        bar.background = `hsl(${180 + i * 5}, 70%, 60%)`;
+        bar.thickness = 0;
+        bar.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        bar.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        bar.leftInPixels = 20 + i * (barWidth + barSpacing);
+        bar.paddingBottomInPixels = 10;
 
-        // Add analyzer title
-        const analyzerTitle = new BABYLON.GUI.TextBlock();
-        analyzerTitle.text = "Audio Spectrum Analyzer";
-        analyzerTitle.color = "white";
-        analyzerTitle.fontSize = "14px";
-        analyzerTitle.paddingTopInPixels = -50;
-        analyzerContainer.addControl(analyzerTitle);
-
-        advancedTexture.addControl(analyzerContainer);
-
-        // Update analyzer bars based on audio data
-        if (getMusicSound) {
-            scene.onBeforeRenderObservable.add(() => {
-                const musicSound = getMusicSound();
-                if (musicSound && musicSound.analyzer) {
-                    const analyzer = musicSound.analyzer;
-                    const dataArray = analyzer.getByteFrequencyData();
-
-                    // Update bars with frequency data
-                    for (let i = 0; i < analyzerBars.length; i++) {
-                        const bar = analyzerBars[i];
-                        // Map bar index to frequency data (focusing on lower frequencies for better visualization)
-                        const dataIndex = Math.floor((i / analyzerBars.length) * dataArray.length * 0.3);
-                        const value = dataArray[dataIndex] / 255; // Normalize to 0-1
-                        const barHeight = Math.max(2, value * maxBarHeight);
-                        bar.heightInPixels = barHeight;
-
-                        // Color based on intensity
-                        const hue = 180 + i * 5 + value * 60;
-                        const saturation = 70 + value * 30;
-                        const lightness = 40 + value * 40;
-                        bar.background = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-                    }
-                }
-            });
-        }
-
-        // Create a container for the buttons
-        const buttonContainer = new BABYLON.GUI.StackPanel();
-        buttonContainer.isVertical = false; // Horizontal layout
-        buttonContainer.heightInPixels = 140; // Reduced height since SVGs are now inside buttons
-        buttonContainer.adaptWidthToChildren = true; // Auto-size width based on children
-        buttonContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-        buttonContainer.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-        buttonContainer.paddingBottomInPixels = 20;
-
-        // Button labels
-        const buttonLabels = ["Logarithmic\nfade in", "Logarithmic\nfade out", "Linear\nfade in", "Linear\nfade out", "Exponential\nfade in", "Exponential\nfade out"];
-
-        // Get the SVG fade curves
-        const svgCurves = Playground.CreateVolumeFadeSVGs();
-
-        // Create 6 round buttons with SVGs
-        for (let i = 0; i < 6; i++) {
-            // Create the button
-            const button = BABYLON.GUI.Button.CreateImageWithCenterTextButton(`button${i}`, buttonLabels[i], "data:image/svg+xml;base64," + btoa(svgCurves[i]));
-
-            // Make the button round
-            button.widthInPixels = 120;
-            button.heightInPixels = 120;
-            button.cornerRadius = 10;
-            button.color = "white";
-            button.background = "transparent"; // Make transparent so SVG gradient shows through
-            button.fontSize = "10px";
-            button.paddingLeftInPixels = 5;
-            button.paddingRightInPixels = 5;
-
-            // Configure the image (SVG) positioning
-            if (button.image) {
-                button.image.widthInPixels = 120; // Match button width
-                button.image.heightInPixels = 120; // Match button height
-                button.image.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-                button.image.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-            }
-
-            // Configure the text positioning
-            if (button.textBlock) {
-                button.textBlock.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-                button.textBlock.paddingBottomInPixels = -60; // Move text to bottom of button
-                button.textBlock.color = "white";
-                button.textBlock.outlineWidth = 1;
-                button.textBlock.outlineColor = "black"; // Add outline for better readability
-                button.textBlock.fontSize = "14px";
-            }
-
-            // Hover effects
-            button.pointerEnterAnimation = () => {
-                button.background = "rgba(160, 69, 73, 0.3)"; // Semi-transparent green overlay on hover
-            };
-            button.pointerOutAnimation = () => {
-                button.background = "transparent";
-            };
-
-            // Click event
-            button.onPointerClickObservable.add(() => {
-                console.log(`Button ${i + 1} clicked: ${buttonLabels[i]}`);
-                // You can add specific functionality for each button here
-            });
-
-            buttonContainer.addControl(button);
-        }
-
-        // Add the container to the GUI
-        advancedTexture.addControl(buttonContainer);
-
-        return advancedTexture;
+        analyzerBars.push(bar);
+        analyzerContainer.addControl(bar);
     }
 
-    /**
-     * Creates SVG markup for 6 different audio volume fade curves
-     * @returns Array of 6 SVG strings: [linearIn, linearOut, logIn, logOut, expIn, expOut]
-     */
-    public static CreateVolumeFadeSVGs(): string[] {
-        const width = 120; // Match button width
-        const height = 120; // Match button height
-        const padding = 20;
-        const strokeWidth = 3;
+    // Add analyzer title
+    const analyzerTitle = new BABYLON.GUI.TextBlock();
+    analyzerTitle.text = "Audio Spectrum Analyzer";
+    analyzerTitle.color = "white";
+    analyzerTitle.fontSize = "14px";
+    analyzerTitle.paddingTopInPixels = -50;
+    analyzerContainer.addControl(analyzerTitle);
 
-        // Helper function to generate gradient stops based on volume curve
-        const generateGradientStops = (fadeType: "linear" | "log" | "exp", direction: "in" | "out"): string => {
-            const stops: string[] = [];
-            const steps = 10; // Use fewer steps for gradients
+    advancedTexture.addControl(analyzerContainer);
 
-            for (let i = 0; i <= steps; i++) {
-                const t = i / steps; // 0 to 1
-                let volume: number;
+    // Update analyzer bars based on audio data
+    scene.onBeforeRenderObservable.add(() => {
+        const analyzer = music.analyzer;
+        const dataArray = analyzer.getByteFrequencyData();
 
-                if (fadeType === "linear") {
-                    volume = direction === "in" ? t : 1 - t;
-                } else if (fadeType === "log") {
-                    // Logarithmic fade - make gradient less steep than actual curve
-                    if (direction === "in") {
-                        const x = t + 1 / 50;
-                        const actualVolume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
-                        // Blend with linear for less steep gradient (more linear blend)
-                        volume = 0.5 * actualVolume + 0.5 * t;
-                    } else {
-                        const x = 1 - t + 1 / 50;
-                        const actualVolume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
-                        // Blend with linear for less steep gradient (more linear blend)
-                        volume = 0.5 * actualVolume + 0.5 * (1 - t);
-                    }
-                } else {
-                    // Exponential fade - make gradient less steep than actual curve
-                    if (direction === "in") {
-                        const actualVolume = Math.exp(-11.512925464970227 * (1 - t));
-                        // Blend with linear for less steep gradient (more linear blend)
-                        volume = 0.5 * actualVolume + 0.5 * t;
-                    } else {
-                        const actualVolume = Math.exp(-11.512925464970227 * t);
-                        // Blend with linear for less steep gradient (more linear blend)
-                        volume = 0.5 * actualVolume + 0.5 * (1 - t);
-                    }
-                }
+        // Update bars with frequency data
+        for (let i = 0; i < analyzerBars.length; i++) {
+            const bar = analyzerBars[i];
+            // Map bar index to frequency data (focusing on lower frequencies for better visualization)
+            const dataIndex = Math.floor((i / analyzerBars.length) * dataArray.length * 0.3);
+            const value = dataArray[dataIndex] / 255; // Normalize to 0-1
+            const barHeight = Math.max(2, value * maxBarHeight);
+            bar.heightInPixels = barHeight;
 
-                const percentage = (t * 100).toFixed(1);
-                stops.push(`<stop offset="${percentage}%" style="stop-color:rgba(76,80,175,${volume.toFixed(2)}); stop-opacity:1"/>`);
-            }
+            // Color based on intensity
+            const hue = 180 + i * 5 + value * 60;
+            const saturation = 70 + value * 30;
+            const lightness = 40 + value * 40;
+            bar.background = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        }
+    });
 
-            return stops.join("\n      ");
+    // Create a container for the buttons
+    const buttonContainer = new BABYLON.GUI.StackPanel();
+    buttonContainer.isVertical = false; // Horizontal layout
+    buttonContainer.heightInPixels = 140; // Reduced height since SVGs are now inside buttons
+    buttonContainer.adaptWidthToChildren = true; // Auto-size width based on children
+    buttonContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+    buttonContainer.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+    buttonContainer.paddingBottomInPixels = 20;
+
+    // Get the SVG fade curves
+    const svgCurves = CreateVolumeFadeSVGs();
+
+    // Create 6 round buttons with SVGs
+    for (let i = 0; i < 6; i++) {
+        // Create the button
+        const button = BABYLON.GUI.Button.CreateImageWithCenterTextButton(`button${i}`, ButtonLabels[i], "data:image/svg+xml;base64," + btoa(svgCurves[i]));
+
+        // Make the button round
+        button.widthInPixels = 120;
+        button.heightInPixels = 120;
+        button.cornerRadius = 10;
+        button.color = "white";
+        button.background = "transparent"; // Make transparent so SVG gradient shows through
+        button.fontSize = "10px";
+        button.paddingLeftInPixels = 5;
+        button.paddingRightInPixels = 5;
+
+        // Configure the image (SVG) positioning
+        if (button.image) {
+            button.image.widthInPixels = 120; // Match button width
+            button.image.heightInPixels = 120; // Match button height
+            button.image.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+            button.image.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+        }
+
+        // Configure the text positioning
+        if (button.textBlock) {
+            button.textBlock.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            button.textBlock.paddingBottomInPixels = -60; // Move text to bottom of button
+            button.textBlock.color = "white";
+            button.textBlock.outlineWidth = 1;
+            button.textBlock.outlineColor = "black"; // Add outline for better readability
+            button.textBlock.fontSize = "14px";
+        }
+
+        // Hover effects
+        button.pointerEnterAnimation = () => {
+            button.background = "rgba(160, 69, 73, 0.3)"; // Semi-transparent green overlay on hover
+        };
+        button.pointerOutAnimation = () => {
+            button.background = "transparent";
         };
 
-        // Helper function to create SVG with path and gradient background
-        const createSVG = (pathData: string, title: string, gradientId: string, gradientStops: string): string => {
-            return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        // Click event
+        button.onPointerClickObservable.add(() => {
+            onButtonClicked(i);
+        });
+
+        buttonContainer.addControl(button);
+    }
+
+    // Add the container to the GUI
+    advancedTexture.addControl(buttonContainer);
+
+    return advancedTexture;
+}
+
+/**
+ * Creates SVG markup for 6 different audio volume fade curves
+ * @returns Array of 6 SVG strings: [linearIn, linearOut, logIn, logOut, expIn, expOut]
+ */
+function CreateVolumeFadeSVGs(): string[] {
+    const width = 120; // Match button width
+    const height = 120; // Match button height
+    const padding = 20;
+    const strokeWidth = 3;
+
+    // Helper function to generate gradient stops based on volume curve
+    const generateGradientStops = (fadeType: "linear" | "log" | "exp", direction: "in" | "out"): string => {
+        const stops: string[] = [];
+        const steps = 10; // Use fewer steps for gradients
+
+        for (let i = 0; i <= steps; i++) {
+            const t = i / steps; // 0 to 1
+            let volume: number;
+
+            if (fadeType === "linear") {
+                volume = direction === "in" ? t : 1 - t;
+            } else if (fadeType === "log") {
+                // Logarithmic fade - make gradient less steep than actual curve
+                if (direction === "in") {
+                    const x = t + 1 / 50;
+                    const actualVolume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
+                    // Blend with linear for less steep gradient (more linear blend)
+                    volume = 0.5 * actualVolume + 0.5 * t;
+                } else {
+                    const x = 1 - t + 1 / 50;
+                    const actualVolume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
+                    // Blend with linear for less steep gradient (more linear blend)
+                    volume = 0.5 * actualVolume + 0.5 * (1 - t);
+                }
+            } else {
+                // Exponential fade - make gradient less steep than actual curve
+                if (direction === "in") {
+                    const actualVolume = Math.exp(-11.512925464970227 * (1 - t));
+                    // Blend with linear for less steep gradient (more linear blend)
+                    volume = 0.5 * actualVolume + 0.5 * t;
+                } else {
+                    const actualVolume = Math.exp(-11.512925464970227 * t);
+                    // Blend with linear for less steep gradient (more linear blend)
+                    volume = 0.5 * actualVolume + 0.5 * (1 - t);
+                }
+            }
+
+            const percentage = (t * 100).toFixed(1);
+            stops.push(`<stop offset="${percentage}%" style="stop-color:rgba(76,80,175,${volume.toFixed(2)}); stop-opacity:1"/>`);
+        }
+
+        return stops.join("\n      ");
+    };
+
+    // Helper function to create SVG with path and gradient background
+    const createSVG = (pathData: string, title: string, gradientId: string, gradientStops: string): string => {
+        return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
   <title>${title}</title>
   <defs>
     <linearGradient id="${gradientId}" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -252,66 +250,65 @@ class Playground {
   <rect width="100%" height="100%" fill="url(#${gradientId})"/>
   <path d="${pathData}" stroke="white" stroke-width="${strokeWidth}" fill="none"/>
 </svg>`;
-        };
+    };
 
-        // Helper function to generate points for curves
-        const generateCurvePoints = (fadeType: "linear" | "log" | "exp", direction: "in" | "out"): string => {
-            const points: string[] = [];
-            const steps = 50;
+    // Helper function to generate points for curves
+    const generateCurvePoints = (fadeType: "linear" | "log" | "exp", direction: "in" | "out"): string => {
+        const points: string[] = [];
+        const steps = 50;
 
-            const offsetY = -20;
+        const offsetY = -20;
 
-            for (let i = 0; i <= steps; i++) {
-                const t = i / steps; // 0 to 1
-                let volume: number;
+        for (let i = 0; i <= steps; i++) {
+            const t = i / steps; // 0 to 1
+            let volume: number;
 
-                if (fadeType === "linear") {
-                    volume = direction === "in" ? t : 1 - t;
-                } else if (fadeType === "log") {
-                    // Logarithmic fade matching GetLogCurve function
-                    if (direction === "in") {
-                        // For fade in: use the log curve as-is
-                        const x = t + 1 / 50; // Add small increment to avoid log(0)
-                        volume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
-                    } else {
-                        // For fade out: invert the log curve
-                        const x = 1 - t + 1 / 50;
-                        volume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
-                    }
+            if (fadeType === "linear") {
+                volume = direction === "in" ? t : 1 - t;
+            } else if (fadeType === "log") {
+                // Logarithmic fade matching GetLogCurve function
+                if (direction === "in") {
+                    // For fade in: use the log curve as-is
+                    const x = t + 1 / 50; // Add small increment to avoid log(0)
+                    volume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
                 } else {
-                    // Exponential fade matching GetExpCurve function
-                    if (direction === "in") {
-                        // For fade in: use the exp curve as-is
-                        volume = Math.exp(-11.512925464970227 * (1 - t));
-                    } else {
-                        // For fade out: invert the exp curve
-                        volume = Math.exp(-11.512925464970227 * t);
-                    }
+                    // For fade out: invert the log curve
+                    const x = 1 - t + 1 / 50;
+                    volume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
                 }
-
-                const x = padding + t * (width - 2 * padding);
-                const y = height - padding - volume * (height - 4 * padding) - padding; // Center the curve vertically
-
-                if (i === 0) {
-                    points.push(`M ${x.toFixed(2)} ${(offsetY + y).toFixed(2)}`);
+            } else {
+                // Exponential fade matching GetExpCurve function
+                if (direction === "in") {
+                    // For fade in: use the exp curve as-is
+                    volume = Math.exp(-11.512925464970227 * (1 - t));
                 } else {
-                    points.push(`L ${x.toFixed(2)} ${(offsetY + y).toFixed(2)}`);
+                    // For fade out: invert the exp curve
+                    volume = Math.exp(-11.512925464970227 * t);
                 }
             }
 
-            return points.join(" ");
-        };
+            const x = padding + t * (width - 2 * padding);
+            const y = height - padding - volume * (height - 4 * padding) - padding; // Center the curve vertically
 
-        // Generate all 6 fade curves
-        const logIn = createSVG(generateCurvePoints("log", "in"), "Logarithmic Fade In", "logInGrad", generateGradientStops("log", "in"));
-        const logOut = createSVG(generateCurvePoints("log", "out"), "Logarithmic Fade Out", "logOutGrad", generateGradientStops("log", "out"));
-        const linearIn = createSVG(generateCurvePoints("linear", "in"), "Linear Fade In", "linearInGrad", generateGradientStops("linear", "in"));
-        const linearOut = createSVG(generateCurvePoints("linear", "out"), "Linear Fade Out", "linearOutGrad", generateGradientStops("linear", "out"));
-        const expIn = createSVG(generateCurvePoints("exp", "in"), "Exponential Fade In", "expInGrad", generateGradientStops("exp", "in"));
-        const expOut = createSVG(generateCurvePoints("exp", "out"), "Exponential Fade Out", "expOutGrad", generateGradientStops("exp", "out"));
+            if (i === 0) {
+                points.push(`M ${x.toFixed(2)} ${(offsetY + y).toFixed(2)}`);
+            } else {
+                points.push(`L ${x.toFixed(2)} ${(offsetY + y).toFixed(2)}`);
+            }
+        }
 
-        return [logIn, logOut, linearIn, linearOut, expIn, expOut];
-    }
+        return points.join(" ");
+    };
+
+    // Generate all 6 fade curves
+    const logIn = createSVG(generateCurvePoints("log", "in"), "Logarithmic Fade In", "logInGrad", generateGradientStops("log", "in"));
+    const logOut = createSVG(generateCurvePoints("log", "out"), "Logarithmic Fade Out", "logOutGrad", generateGradientStops("log", "out"));
+    const linearIn = createSVG(generateCurvePoints("linear", "in"), "Linear Fade In", "linearInGrad", generateGradientStops("linear", "in"));
+    const linearOut = createSVG(generateCurvePoints("linear", "out"), "Linear Fade Out", "linearOutGrad", generateGradientStops("linear", "out"));
+    const expIn = createSVG(generateCurvePoints("exp", "in"), "Exponential Fade In", "expInGrad", generateGradientStops("exp", "in"));
+    const expOut = createSVG(generateCurvePoints("exp", "out"), "Exponential Fade Out", "expOutGrad", generateGradientStops("exp", "out"));
+
+    return [logIn, logOut, linearIn, linearOut, expIn, expOut];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
