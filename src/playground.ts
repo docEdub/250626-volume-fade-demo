@@ -24,39 +24,9 @@ class Playground {
         // Our built-in 'ground' shape. Params: name, options, scene
         var ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 6, height: 6 }, scene);
 
-        // Setup GUI.
-        let canvasZone = document.getElementById("canvasZone")!;
-        canvasZone.style.position = "relative";
-
-        const oldGui = document.getElementById("datGui");
-        if (oldGui) {
-            canvasZone.removeChild(oldGui);
-        }
-
-        const gui = new dat.GUI({ autoPlace: false });
-        canvasZone.appendChild(gui.domElement);
-        gui.domElement.id = "datGui";
-        gui.domElement.style.position = "absolute";
-        gui.domElement.style.top = "0";
-        gui.domElement.style.right = "0";
-
-        const cameraGui = gui.addFolder("camera");
-        cameraGui.add(camera, "alpha", -Math.PI, Math.PI, 0.01).listen();
-        cameraGui.add(camera, "beta", 0.01, Math.PI - 0.01, 0.01).listen();
-        cameraGui.add(camera, "radius", 5, 100, 0.01).listen();
-        cameraGui.open();
-
-        camera.onViewMatrixChangedObservable.add(() => {
-            while (camera.alpha < -Math.PI) camera.alpha += 2 * Math.PI;
-            while (Math.PI < camera.alpha) camera.alpha -= 2 * Math.PI;
-            camera.radius = Math.min(Math.max(5, camera.radius), 100);
-        });
-
         return scene;
     }
-}
 
-declare var dat: any;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
