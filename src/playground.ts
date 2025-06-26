@@ -1,6 +1,6 @@
 class Playground {
     public static CreateScene(engine: BABYLON.Engine, canvas: HTMLCanvasElement): BABYLON.Scene {
-        // Create a basic scene.
+        // Create a basic scene
         const scene = new BABYLON.Scene(engine);
         scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
         scene.createDefaultEnvironment({
@@ -15,8 +15,7 @@ class Playground {
 
         BABYLON.AppendSceneAsync("https://playground.babylonjs.com/scenes/BoomBox.glb", scene);
 
-        // Load music and play it when the audio engine is unlocked.
-        let musicSound: BABYLON.StreamingSound | null = null;
+        // Load music and play it when the audio engine is unlocked
         (async () => {
             const audioEngine = await BABYLON.CreateAudioEngineAsync({ volume: 0.5 });
             const music = await BABYLON.CreateStreamingSoundAsync("music", "https://amf-ms.github.io/AudioAssets/samples/mobygratis/bird.mp3", {
@@ -27,20 +26,10 @@ class Playground {
 
             const rampDuration = 2;
             let rampFinished = true;
+
+            // Init GUI
             let guiButtons: BABYLON.GUI.Button[] = [];
 
-            const waitForRampToFinish = () => {
-                setTimeout(() => {
-                    rampFinished = true;
-                    // Re-enable all buttons
-                    guiButtons.forEach((button) => {
-                        button.isEnabled = true;
-                        button.alpha = 1;
-                    });
-                }, (rampDuration + 0.5) * 1000);
-            };
-
-            // Init GUI.
             const { gui, buttons } = CreateGUI(scene, music, (buttonIndex: number) => {
                 if (!rampFinished) {
                     console.warn("Previous ramp is still in progress, ignoring click.");
@@ -71,13 +60,27 @@ class Playground {
                 }
 
                 rampFinished = false;
-                // Disable all buttons during ramp
+
+                // Disable buttons while ramping
                 buttons.forEach((button) => {
                     button.isEnabled = false;
                     button.alpha = 0.5;
                 });
+
                 waitForRampToFinish();
             });
+
+            const waitForRampToFinish = () => {
+                setTimeout(() => {
+                    rampFinished = true;
+
+                    // Re-enable buttons
+                    guiButtons.forEach((button) => {
+                        button.isEnabled = true;
+                        button.alpha = 1;
+                    });
+                }, (rampDuration + 0.5) * 1000);
+            };
 
             // Store the buttons array for enabling/disabling
             guiButtons = buttons;
@@ -89,12 +92,6 @@ class Playground {
 
 const ButtonLabels = ["Logarithmic\nfade in", "Logarithmic\nfade out", "Linear\nfade in", "Linear\nfade out", "Exponential\nfade in", "Exponential\nfade out"];
 
-/**
- * Creates a 2D GUI with 6 round buttons in a row at the bottom of the screen
- * @param scene The Babylon.js scene to attach the GUI to
- * @param getMusicSound Function to get the current music sound for analyzer access
- * @returns Object containing the GUI AdvancedDynamicTexture and the buttons array
- */
 function CreateGUI(
     scene: BABYLON.Scene,
     music: BABYLON.StreamingSound,
@@ -171,9 +168,9 @@ function CreateGUI(
 
     // Create a container for the buttons
     const buttonContainer = new BABYLON.GUI.StackPanel();
-    buttonContainer.isVertical = false; // Horizontal layout
-    buttonContainer.heightInPixels = 140; // Reduced height since SVGs are now inside buttons
-    buttonContainer.adaptWidthToChildren = true; // Auto-size width based on children
+    buttonContainer.isVertical = false;
+    buttonContainer.heightInPixels = 140;
+    buttonContainer.adaptWidthToChildren = true;
     buttonContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
     buttonContainer.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
     buttonContainer.paddingBottomInPixels = 20;
@@ -188,8 +185,6 @@ function CreateGUI(
     for (let i = 0; i < 6; i++) {
         // Create the button
         const button = BABYLON.GUI.Button.CreateImageWithCenterTextButton(`button${i}`, ButtonLabels[i], "data:image/svg+xml;base64," + btoa(svgCurves[i]));
-
-        // Make the button round
         button.widthInPixels = 120;
         button.heightInPixels = 120;
         button.cornerRadius = 10;
