@@ -1,3 +1,5 @@
+//playground.babylonjs.com/#HDPCXJ#2
+
 class Playground {
     public static CreateScene(engine: BABYLON.Engine, canvas: HTMLCanvasElement): BABYLON.Scene {
         // Create a basic scene
