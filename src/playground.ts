@@ -200,15 +200,15 @@ function CreateGUI(
         buttonRows.push(row);
     }
 
-    // Get the SVG fade curves
-    const svgCurves = CreateVolumeFadeSVGs();
+    // Get the SVG fade shapes
+    const svgShapes = CreateVolumeFadeSVGs();
 
     // Array to store all buttons
     const buttons: BABYLON.GUI.Button[] = [];
 
     // Create buttons and organize them into three rows
     for (let i = 0; i < ButtonLabels.length; i++) {
-        const button = BABYLON.GUI.Button.CreateImageWithCenterTextButton(`button-${i}`, ButtonLabels[i], "data:image/svg+xml;base64," + btoa(svgCurves[i]));
+        const button = BABYLON.GUI.Button.CreateImageWithCenterTextButton(`button-${i}`, ButtonLabels[i], "data:image/svg+xml;base64," + btoa(svgShapes[i]));
         button.widthInPixels = ButtonWidth;
         button.heightInPixels = ButtonHeight;
         button.cornerRadius = 5;
@@ -262,7 +262,7 @@ function CreateGUI(
 }
 
 /**
- * Creates SVG markup for 6 different audio volume fade curves
+ * Creates SVG markup for 6 different audio volume fade shapes
  * @returns Array of 6 SVG strings: [linearIn, linearOut, logIn, logOut, expIn, expOut]
  */
 function CreateVolumeFadeSVGs(): string[] {
@@ -271,44 +271,41 @@ function CreateVolumeFadeSVGs(): string[] {
     const padding = 10;
     const strokeWidth = 2;
 
-    // Helper function to generate gradient stops based on volume curve
+    // Helper function to generate gradient stops based on volume shape
     const generateGradientStops = (fadeType: "linear" | "log" | "exp", direction: "in" | "out"): string => {
         const stops: string[] = [];
         const steps = 10; // Use fewer steps for gradients
 
         for (let i = 0; i <= steps; i++) {
-            const t = i / steps; // 0 to 1
             let volume: number;
 
-            if (fadeType === "linear") {
-                volume = direction === "in" ? t : 1 - t;
-            } else if (fadeType === "log") {
-                // Logarithmic fade - make gradient less steep than actual curve
-                if (direction === "in") {
-                    const x = t + 1 / 50;
-                    const actualVolume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
-                    // Blend with linear for less steep gradient (more linear blend)
-                    volume = 0.5 * actualVolume + 0.5 * t;
-                } else {
-                    const x = 1 - t + 1 / 50;
-                    const actualVolume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
-                    // Blend with linear for less steep gradient (more linear blend)
-                    volume = 0.5 * actualVolume + 0.5 * (1 - t);
-                }
-            } else {
-                // Exponential fade - make gradient less steep than actual curve
-                if (direction === "in") {
-                    const actualVolume = Math.exp(-11.512925464970227 * (1 - t));
-                    // Blend with linear for less steep gradient (more linear blend)
-                    volume = 0.5 * actualVolume + 0.5 * t;
-                } else {
-                    const actualVolume = Math.exp(-11.512925464970227 * t);
-                    // Blend with linear for less steep gradient (more linear blend)
-                    volume = 0.5 * actualVolume + 0.5 * (1 - t);
-                }
+            let step = i / steps; // 0 to 1
+            let t = step;
+            let tReverse = 1 - t;
+            if (direction === "out") {
+                t = 1 - t; // Reverse t for fade out
+                tReverse = 1 - t;
             }
 
-            const percentage = (t * 100).toFixed(1);
+            if (fadeType === "linear") {
+                volume = t;
+            } else {
+                let actualVolume: number;
+
+                if (fadeType === "log") {
+                    // Logarithmic fade - make gradient less steep than actual shape
+                    const x = t + 1 / 50;
+                    actualVolume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
+                } else {
+                    // Exponential fade - make gradient less steep than actual shape
+                    actualVolume = Math.exp(-11.512925464970227 * tReverse);
+                }
+
+                // Blend with linear for less steep gradient (more linear blend)
+                volume = 0.5 * actualVolume + 0.5 * t;
+            }
+
+            const percentage = (step * 100).toFixed(1);
             stops.push(`<stop offset="${percentage}%" style="stop-color:rgba(76,80,175,${volume.toFixed(2)}); stop-opacity:1"/>`);
         }
 
@@ -331,8 +328,8 @@ function CreateVolumeFadeSVGs(): string[] {
         `;
     };
 
-    // Helper function to generate points for curves
-    const generateCurvePoints = (fadeType: "linear" | "log" | "exp", direction: "in" | "out"): string => {
+    // Helper function to generate points for shapes
+    const generateShapePoints = (fadeType: "linear" | "log" | "exp", direction: "in" | "out"): string => {
         const offsetY = 3;
         const points: string[] = [];
         const steps = 50;
@@ -363,13 +360,13 @@ function CreateVolumeFadeSVGs(): string[] {
         return points.join(" ");
     };
 
-    // Generate all 6 fade curves
-    const logIn = createSVG(generateCurvePoints("log", "in"), "Logarithmic Fade In", "logInGrad", generateGradientStops("log", "in"));
-    const logOut = createSVG(generateCurvePoints("log", "out"), "Logarithmic Fade Out", "logOutGrad", generateGradientStops("log", "out"));
-    const linearIn = createSVG(generateCurvePoints("linear", "in"), "Linear Fade In", "linearInGrad", generateGradientStops("linear", "in"));
-    const linearOut = createSVG(generateCurvePoints("linear", "out"), "Linear Fade Out", "linearOutGrad", generateGradientStops("linear", "out"));
-    const expIn = createSVG(generateCurvePoints("exp", "in"), "Exponential Fade In", "expInGrad", generateGradientStops("exp", "in"));
-    const expOut = createSVG(generateCurvePoints("exp", "out"), "Exponential Fade Out", "expOutGrad", generateGradientStops("exp", "out"));
+    // Generate all 6 fade shapes
+    const logIn = createSVG(generateShapePoints("log", "in"), "Logarithmic Fade In", "logInGrad", generateGradientStops("log", "in"));
+    const logOut = createSVG(generateShapePoints("log", "out"), "Logarithmic Fade Out", "logOutGrad", generateGradientStops("log", "out"));
+    const linearIn = createSVG(generateShapePoints("linear", "in"), "Linear Fade In", "linearInGrad", generateGradientStops("linear", "in"));
+    const linearOut = createSVG(generateShapePoints("linear", "out"), "Linear Fade Out", "linearOutGrad", generateGradientStops("linear", "out"));
+    const expIn = createSVG(generateShapePoints("exp", "in"), "Exponential Fade In", "expInGrad", generateGradientStops("exp", "in"));
+    const expOut = createSVG(generateShapePoints("exp", "out"), "Exponential Fade Out", "expOutGrad", generateGradientStops("exp", "out"));
 
     return [logIn, logOut, linearIn, linearOut, expIn, expOut];
 }
