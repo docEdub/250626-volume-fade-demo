@@ -168,9 +168,9 @@ function CreateGUI(
     buttonContainer.isVertical = false;
     buttonContainer.heightInPixels = 140;
     buttonContainer.adaptWidthToChildren = true;
-    buttonContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+    buttonContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
     buttonContainer.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-    buttonContainer.paddingBottomInPixels = 20;
+    buttonContainer.paddingTopInPixels = 20;
 
     // Get the SVG fade curves
     const svgCurves = CreateVolumeFadeSVGs();
