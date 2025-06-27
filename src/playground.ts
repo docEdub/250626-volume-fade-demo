@@ -317,24 +317,25 @@ function CreateVolumeFadeSVGs(): string[] {
 
     // Helper function to create SVG with path and gradient background
     const createSVG = (pathData: string, title: string, gradientId: string, gradientStops: string): string => {
-        return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-  <title>${title}</title>
-  <defs>
-    <linearGradient id="${gradientId}" x1="0%" y1="0%" x2="100%" y2="0%">
-      ${gradientStops}
-    </linearGradient>
-  </defs>
-  <rect width="100%" height="100%" fill="url(#${gradientId})"/>
-  <path d="${pathData}" stroke="white" stroke-width="${strokeWidth}" fill="none"/>
-</svg>`;
+        return `
+            <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+                <title>${title}</title>
+                <defs>
+                    <linearGradient id="${gradientId}" x1="0%" y1="0%" x2="100%" y2="0%">
+                        ${gradientStops}
+                    </linearGradient>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#${gradientId})"/>
+                <path d="${pathData}" stroke="white" stroke-width="${strokeWidth}" fill="none"/>
+            </svg>
+        `;
     };
 
     // Helper function to generate points for curves
     const generateCurvePoints = (fadeType: "linear" | "log" | "exp", direction: "in" | "out"): string => {
+        const offsetY = 3;
         const points: string[] = [];
         const steps = 50;
-
-        const offsetY = 7;
 
         for (let i = 0; i <= steps; i++) {
             let step = i / steps; // 0 to 1
@@ -345,16 +346,16 @@ function CreateVolumeFadeSVGs(): string[] {
             if (fadeType === "linear") {
                 volume = t;
             } else if (fadeType === "log") {
-                // Logarithmic fade matching GetLogCurve function
+                // Logarithmic fade matching audio engine implementation
                 const x = t + 1 / 50; // Add small increment to avoid log(0)
                 volume = Math.max(0, 1 + Math.log10(x) / Math.log10(50));
             } else {
-                // Exponential fade matching GetExpCurve function
+                // Exponential fade matching audio engine implementation
                 volume = Math.exp(-11.512925464970227 * (1 - t));
             }
 
             const x = padding + step * (width - 2 * padding);
-            const y = 0.3 * (height - padding - volume * (height - 4 * padding) - padding); // Center the curve vertically
+            const y = 0.5 * (height - padding - volume * (height - 4 * padding) - padding);
 
             points.push(`${i === 0 ? "M" : "L"} ${x.toFixed(2)} ${(offsetY + y).toFixed(2)}`);
         }
