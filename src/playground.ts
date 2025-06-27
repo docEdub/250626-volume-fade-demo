@@ -19,7 +19,8 @@ class Playground {
 
         // Load music and play it when the audio engine is unlocked
         (async () => {
-            const audioEngine = await BABYLON.CreateAudioEngineAsync({ volume: 0.5 });
+            await BABYLON.CreateAudioEngineAsync({ volume: 0.5 });
+
             const music = await BABYLON.CreateStreamingSoundAsync("music", "https://amf-ms.github.io/AudioAssets/samples/mobygratis/bird.mp3", {
                 analyzerEnabled: true,
                 autoplay: true,
