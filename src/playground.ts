@@ -268,7 +268,7 @@ function CreateGUI(
 function CreateVolumeFadeSVGs(): string[] {
     const width = 60; // Match button width
     const height = 60; // Match button height
-    const padding = 0;
+    const padding = 10;
     const strokeWidth = 2;
 
     // Helper function to generate gradient stops based on volume curve
