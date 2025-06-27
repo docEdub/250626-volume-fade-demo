@@ -13,7 +13,6 @@ class Playground {
         const camera = scene.activeCamera as BABYLON.ArcRotateCamera;
         camera.alpha = Math.PI / 2;
         camera.radius = 0.05;
-        camera.target.y = -0.005;
 
         BABYLON.AppendSceneAsync("https://playground.babylonjs.com/scenes/BoomBox.glb", scene);
 
@@ -99,6 +98,9 @@ class Playground {
 }
 
 const ButtonLabels = ["Logarithmic\nfade in", "Logarithmic\nfade out", "Linear\nfade in", "Linear\nfade out", "Exponential\nfade in", "Exponential\nfade out"];
+const ButtonWidth = 95;
+const ButtonHeight = 60;
+const ButtonPadding = 5;
 
 function CreateGUI(
     scene: BABYLON.Scene,
@@ -115,8 +117,8 @@ function CreateGUI(
     analyzerContainer.background = "rgba(0, 0, 0, 0.7)";
     analyzerContainer.thickness = 0;
     analyzerContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-    analyzerContainer.paddingTopInPixels = -200; // Position above the buttons
-    analyzerContainer.paddingBottomInPixels = 130;
+    analyzerContainer.paddingTopInPixels = -100;
+    analyzerContainer.paddingBottomInPixels = 30;
 
     // Create analyzer bars
     const analyzerBars: BABYLON.GUI.Rectangle[] = [];
@@ -163,14 +165,40 @@ function CreateGUI(
         }
     });
 
-    // Create a container for the buttons
-    const buttonContainer = new BABYLON.GUI.StackPanel();
-    buttonContainer.isVertical = false;
-    buttonContainer.heightInPixels = 140;
-    buttonContainer.adaptWidthToChildren = true;
-    buttonContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    buttonContainer.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-    buttonContainer.paddingTopInPixels = 20;
+    // Create a main container for all buttons
+    const mainButtonContainer = new BABYLON.GUI.StackPanel();
+    mainButtonContainer.isVertical = true;
+    mainButtonContainer.heightInPixels = 300;
+    mainButtonContainer.adaptWidthToChildren = true;
+    mainButtonContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    mainButtonContainer.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+    mainButtonContainer.paddingTopInPixels = 2;
+
+    // Create 1st row container for "logarithmic" buttons
+    const row1 = new BABYLON.GUI.StackPanel();
+    row1.isVertical = false;
+    row1.heightInPixels = ButtonHeight + 2 * ButtonPadding;
+    row1.adaptWidthToChildren = true;
+    row1.paddingTopInPixels = ButtonPadding;
+    row1.paddingBottomInPixels = ButtonPadding;
+
+    // Create 2nd row container for "linear" buttons
+    const row2 = new BABYLON.GUI.StackPanel();
+    row2.isVertical = false;
+    row2.heightInPixels = ButtonHeight + 2 * ButtonPadding;
+    row2.adaptWidthToChildren = true;
+    row2.paddingTopInPixels = ButtonPadding;
+    row2.paddingBottomInPixels = ButtonPadding;
+
+    // Create bottom row container for "exponential" buttons
+    const row3 = new BABYLON.GUI.StackPanel();
+    row3.isVertical = false;
+    row3.heightInPixels = ButtonHeight + 2 * ButtonPadding;
+    row3.adaptWidthToChildren = true;
+    row3.paddingTopInPixels = ButtonPadding;
+    row3.paddingBottomInPixels = ButtonPadding;
+
+    const buttonRows = [row1, row2, row3];
 
     // Get the SVG fade curves
     const svgCurves = CreateVolumeFadeSVGs();
@@ -178,23 +206,22 @@ function CreateGUI(
     // Array to store all buttons
     const buttons: BABYLON.GUI.Button[] = [];
 
-    // Create 6 round buttons with SVGs
-    for (let i = 0; i < 6; i++) {
-        // Create the button
-        const button = BABYLON.GUI.Button.CreateImageWithCenterTextButton(`button${i}`, ButtonLabels[i], "data:image/svg+xml;base64," + btoa(svgCurves[i]));
-        button.widthInPixels = 60;
-        button.heightInPixels = 60;
+    // Create buttons and organize them into three rows
+    for (let i = 0; i < ButtonLabels.length; i++) {
+        const button = BABYLON.GUI.Button.CreateImageWithCenterTextButton(`button-${i}`, ButtonLabels[i], "data:image/svg+xml;base64," + btoa(svgCurves[i]));
+        button.widthInPixels = ButtonWidth;
+        button.heightInPixels = ButtonHeight;
         button.cornerRadius = 5;
-        button.color = "rgb(127, 127, 127)"; // Semi-transparent white for better visibility
-        button.background = "transparent"; // Make transparent so SVG gradient shows through
+        button.color = "rgb(127, 127, 127)";
+        button.background = "transparent";
         button.fontSize = "5px";
         button.paddingLeftInPixels = 2;
         button.paddingRightInPixels = 2;
 
         // Configure the image (SVG) positioning
         if (button.image) {
-            button.image.widthInPixels = 60; // Match button width
-            button.image.heightInPixels = 60; // Match button height
+            button.image.widthInPixels = ButtonWidth;
+            button.image.heightInPixels = ButtonHeight;
             button.image.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
             button.image.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
         }
@@ -202,14 +229,14 @@ function CreateGUI(
         // Configure the text positioning
         if (button.textBlock) {
             button.textBlock.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-            button.textBlock.paddingBottomInPixels = -30; // Move text to bottom of button
+            button.textBlock.paddingBottomInPixels = -30;
             button.textBlock.color = "white";
             button.textBlock.fontSize = "9px";
         }
 
         // Hover effects
         button.pointerEnterAnimation = () => {
-            button.background = "rgba(160, 69, 73, 0.3)"; // Semi-transparent green overlay on hover
+            button.background = "rgba(160, 69, 73, 0.3)";
         };
         button.pointerOutAnimation = () => {
             button.background = "transparent";
@@ -220,12 +247,18 @@ function CreateGUI(
             onButtonClicked(i);
         });
 
-        buttons.push(button);
-        buttonContainer.addControl(button);
+        buttons[i] = button;
+
+        buttonRows[Math.floor(i / 2)].addControl(button);
     }
 
-    // Add the container to the GUI
-    advancedTexture.addControl(buttonContainer);
+    // Add the row containers to the main container
+    mainButtonContainer.addControl(row1);
+    mainButtonContainer.addControl(row2);
+    mainButtonContainer.addControl(row3);
+
+    // Add the main container to the GUI
+    advancedTexture.addControl(mainButtonContainer);
 
     return { gui: advancedTexture, buttons };
 }
