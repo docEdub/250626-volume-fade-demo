@@ -12,8 +12,8 @@ class Playground {
         scene.createDefaultCameraOrLight(true, true, false);
         const camera = scene.activeCamera as BABYLON.ArcRotateCamera;
         camera.alpha = Math.PI / 2;
-        camera.radius = 0.07;
-        camera.target.y = 0.006;
+        camera.radius = 0.09;
+        camera.target.y = 0.01;
 
         BABYLON.AppendSceneAsync("https://playground.babylonjs.com/scenes/BoomBox.glb", scene);
 
