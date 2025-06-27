@@ -1,4 +1,4 @@
-// playground.babylonjs.com/#HDPCXJ#4
+// playground.babylonjs.com/#HDPCXJ#5
 
 class Playground {
     public static CreateScene(engine: BABYLON.Engine, canvas: HTMLCanvasElement): BABYLON.Scene {
@@ -33,7 +33,7 @@ class Playground {
             // Init GUI
             let guiButtons: BABYLON.GUI.Button[] = [];
 
-            const { gui, buttons } = CreateGUI(scene, music, (buttonIndex: number) => {
+            const { buttons } = CreateGUI(scene, music, (buttonIndex: number) => {
                 if (!rampFinished) {
                     console.warn("Previous ramp is still in progress, ignoring click.");
                     return;
@@ -105,11 +105,7 @@ const ButtonHeight = 80;
 const ButtonPadding = 5;
 const ButtonFontSize = "11px";
 
-function CreateGUI(
-    scene: BABYLON.Scene,
-    music: BABYLON.StreamingSound,
-    onButtonClicked: (buttonIndex: number) => void
-): { gui: BABYLON.GUI.AdvancedDynamicTexture; buttons: BABYLON.GUI.Button[] } {
+function CreateGUI(scene: BABYLON.Scene, music: BABYLON.StreamingSound, onButtonClicked: (buttonIndex: number) => void): { buttons: BABYLON.GUI.Button[] } {
     // Create a fullscreen GUI
     const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene);
 
@@ -259,7 +255,7 @@ function CreateGUI(
 
     advancedTexture.addControl(mainButtonContainer);
 
-    return { gui: advancedTexture, buttons };
+    return { buttons };
 }
 
 /**
