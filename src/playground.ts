@@ -186,31 +186,19 @@ function CreateGUI(
     instructions.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
     instructions.paddingBottomInPixels = 10;
 
-    // Create 1st row container for "logarithmic" buttons
-    const row1 = new BABYLON.GUI.StackPanel();
-    row1.isVertical = false;
-    row1.heightInPixels = ButtonHeight + 2 * ButtonPadding;
-    row1.adaptWidthToChildren = true;
-    row1.paddingTopInPixels = ButtonPadding;
-    row1.paddingBottomInPixels = ButtonPadding;
+    // Create row containers for fade in and out buttons
+    const buttonRows: BABYLON.GUI.StackPanel[] = [];
 
-    // Create 2nd row container for "linear" buttons
-    const row2 = new BABYLON.GUI.StackPanel();
-    row2.isVertical = false;
-    row2.heightInPixels = ButtonHeight + 2 * ButtonPadding;
-    row2.adaptWidthToChildren = true;
-    row2.paddingTopInPixels = ButtonPadding;
-    row2.paddingBottomInPixels = ButtonPadding;
+    for (let i = 0; i < 3; i++) {
+        const row = new BABYLON.GUI.StackPanel();
+        row.isVertical = false;
+        row.heightInPixels = ButtonHeight + 2 * ButtonPadding;
+        row.adaptWidthToChildren = true;
+        row.paddingTopInPixels = ButtonPadding;
+        row.paddingBottomInPixels = ButtonPadding;
 
-    // Create bottom row container for "exponential" buttons
-    const row3 = new BABYLON.GUI.StackPanel();
-    row3.isVertical = false;
-    row3.heightInPixels = ButtonHeight + 2 * ButtonPadding;
-    row3.adaptWidthToChildren = true;
-    row3.paddingTopInPixels = ButtonPadding;
-    row3.paddingBottomInPixels = ButtonPadding;
-
-    const buttonRows = [row1, row2, row3];
+        buttonRows.push(row);
+    }
 
     // Get the SVG fade curves
     const svgCurves = CreateVolumeFadeSVGs();
@@ -263,13 +251,11 @@ function CreateGUI(
         buttonRows[Math.floor(i / 2)].addControl(button);
     }
 
-    // Add the call-to-action text and row containers to the main container
     mainButtonContainer.addControl(instructions);
-    mainButtonContainer.addControl(row1);
-    mainButtonContainer.addControl(row2);
-    mainButtonContainer.addControl(row3);
+    mainButtonContainer.addControl(buttonRows[0]);
+    mainButtonContainer.addControl(buttonRows[1]);
+    mainButtonContainer.addControl(buttonRows[2]);
 
-    // Add the main container to the GUI
     advancedTexture.addControl(mainButtonContainer);
 
     return { gui: advancedTexture, buttons };
