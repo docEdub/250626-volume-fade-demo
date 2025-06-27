@@ -12,7 +12,8 @@ class Playground {
         scene.createDefaultCameraOrLight(true, true, false);
         const camera = scene.activeCamera as BABYLON.ArcRotateCamera;
         camera.alpha = Math.PI / 2;
-        camera.radius = 0.05;
+        camera.radius = 0.07;
+        camera.target.y = 0.006;
 
         BABYLON.AppendSceneAsync("https://playground.babylonjs.com/scenes/BoomBox.glb", scene);
 
@@ -99,8 +100,9 @@ class Playground {
 
 const ButtonLabels = ["Logarithmic\nfade in", "Logarithmic\nfade out", "Linear\nfade in", "Linear\nfade out", "Exponential\nfade in", "Exponential\nfade out"];
 const ButtonWidth = 95;
-const ButtonHeight = 60;
+const ButtonHeight = 80;
 const ButtonPadding = 5;
+const ButtonFontSize = "11px";
 
 function CreateGUI(
     scene: BABYLON.Scene,
@@ -168,11 +170,21 @@ function CreateGUI(
     // Create a main container for all buttons
     const mainButtonContainer = new BABYLON.GUI.StackPanel();
     mainButtonContainer.isVertical = true;
-    mainButtonContainer.heightInPixels = 300;
+    mainButtonContainer.heightInPixels = 340;
     mainButtonContainer.adaptWidthToChildren = true;
     mainButtonContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
     mainButtonContainer.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-    mainButtonContainer.paddingTopInPixels = 2;
+    mainButtonContainer.paddingTopInPixels = 20;
+
+    // Create call-to-action text label
+    const instructions = new BABYLON.GUI.TextBlock();
+    instructions.text = "Choose a fade shape to hear volume transition effects";
+    instructions.color = "white";
+    instructions.fontSize = "14px";
+    instructions.widthInPixels = 500;
+    instructions.heightInPixels = 30;
+    instructions.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+    instructions.paddingBottomInPixels = 10;
 
     // Create 1st row container for "logarithmic" buttons
     const row1 = new BABYLON.GUI.StackPanel();
@@ -214,7 +226,6 @@ function CreateGUI(
         button.cornerRadius = 5;
         button.color = "rgb(127, 127, 127)";
         button.background = "transparent";
-        button.fontSize = "5px";
         button.paddingLeftInPixels = 2;
         button.paddingRightInPixels = 2;
 
@@ -231,7 +242,7 @@ function CreateGUI(
             button.textBlock.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
             button.textBlock.paddingBottomInPixels = -30;
             button.textBlock.color = "white";
-            button.textBlock.fontSize = "9px";
+            button.textBlock.fontSize = ButtonFontSize;
         }
 
         // Hover effects
@@ -252,7 +263,8 @@ function CreateGUI(
         buttonRows[Math.floor(i / 2)].addControl(button);
     }
 
-    // Add the row containers to the main container
+    // Add the call-to-action text and row containers to the main container
+    mainButtonContainer.addControl(instructions);
     mainButtonContainer.addControl(row1);
     mainButtonContainer.addControl(row2);
     mainButtonContainer.addControl(row3);
