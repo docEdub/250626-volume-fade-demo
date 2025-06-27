@@ -1,4 +1,4 @@
-//playground.babylonjs.com/#HDPCXJ#2
+// playground.babylonjs.com/#HDPCXJ#4
 
 class Playground {
     public static CreateScene(engine: BABYLON.Engine, canvas: HTMLCanvasElement): BABYLON.Scene {
